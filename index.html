@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maktab UPI Payment QR</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 10px;
+            background: #f5f5f5;
+        }
+        .payment-container {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 450px;
+            margin: 10px auto;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+        }
+        .amount {
+            font-size: 32px;
+            color: #28a745;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .qr-code {
+            margin: 30px 0;
+            padding: 20px;
+            background: #ffffffff;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        #qrCode {
+            display: inline-block;
+        }
+        .button-group {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 17px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .share-btn {
+            background-color: #34C759;
+            color: white;
+        }
+        .share-btn:hover {
+            background-color: #30b050;
+        }
+        .download-btn {
+            background-color: #007AFF;
+            color: white;
+        }
+        .download-btn:hover {
+            background-color: #0056b3;
+        }
+        .info {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .error {
+            color: red;
+            padding: 10px;
+            background: #ffe6e6;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <h2>💳 Pay via UPI</h2>
+        <div class="amount">₹10.00</div><p>Minimum (کم از کم)</p>
+        <br>
+        <p>
+            Scan this QR code to pay ₹100 via UPI to SK MD RAIHAN
+        </p>
+        
+        <div class="qr-code">
+            <div id="qrCode"></div>
+        </div>
+        
+        <div class="error" id="errorMsg"></div>
+        
+        <div class="info">
+            <p><strong>Name : </strong>MD MAQSOOD ALAM</p>
+            <p><strong>UPI ID : </strong>9563587140@ybl</p>
+        </div>
+        
+        <div class="button-group">
+            <button id="shareBtn" class="share-btn">📤 Share QR Code (شیئر&nbsp;کریں)</button>
+            <button id="downloadBtn" class="download-btn">⬇️ Download QR Code (ڈاؤنلوڈ&nbsp;کریں)</button>
+        </div>
+    </div>
+    
+    <!-- QRCode.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <script>
+        const upiString = "upi://pay?pa=9563587140@ybl&pn=MD%20MAQSOOD%20ALAM&mc=0000&mode=02&purpose=00";
+        const qrCodeElement = document.getElementById('qrCode');
+        const errorMsg = document.getElementById('errorMsg');
+        
+        // Check if QRCode library loaded
+        if (typeof QRCode === 'undefined') {
+            errorMsg.textContent = 'QR Code library failed to load. Please refresh the page.';
+            errorMsg.style.display = 'block';
+        } 
+        else {
+            try { // Generate QR code
+                new QRCode(qrCodeElement, {
+                    text: upiString,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                // console.log('QR Code generated successfully');
+            } 
+            catch (error) {
+                errorMsg.textContent = 'Error generating QR code: ' + error.message;
+                errorMsg.style.display = 'block';
+                // console.error('QR Generation Error:', error);
+            }
+        }
+        
+        // Helper function to create padded canvas
+        function getPaddedQRCanvas(padding = 25) {
+            
+            const canvas = qrCodeElement.querySelector('canvas');
+            if (!canvas) return null;
+            
+            const paddedCanvas = document.createElement('canvas');
+            const ctx = paddedCanvas.getContext('2d');
+            
+            paddedCanvas.width = canvas.width + (padding * 2);
+            paddedCanvas.height = canvas.height + (padding * 2);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, paddedCanvas.width, paddedCanvas.height);
+            ctx.drawImage(canvas, padding, padding);
+            
+            return paddedCanvas;
+        }
+        
+        // Share QR Code
+        document.getElementById('shareBtn').addEventListener('click', async function() {
+            try {
+                // Get the canvas from the generated QR code
+                const canvas = getPaddedQRCanvas();
+                
+                if (!canvas) {
+                    alert('QR code not generated yet. Please refresh the page.');
+                    return;
+                }
+                // Convert canvas to blob
+                canvas.toBlob(async function(blob) {
+                    try {
+                        const file = new File([blob], 'maktab-payment-qr.png', { type: 'image/png' });
+                        
+                        // Check if Web Share API is available
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                files: [file],
+                                title: 'UPI Payment QR Code',
+                                text: 'Scan this QR code to pay ₹100 via UPI to SK MD RAIHAN'
+                            });
+                            // console.log('QR code shared successfully');
+                        } 
+                        else {
+                            errorMsg.textContent = 'Web Share API is not supported on your device. Use Download instead. \n\
+                                اس کے لیے ویب شیئر نہیں کیا جا سکتا۔ برائے مہربانی اسے ڈاؤن لوڈ کریں اور گیلری سے شیئر کریں';
+                            errorMsg.style.display = 'block';
+                        }
+                    } 
+                    catch (error) {
+                        console.error('Blob conversion error:', error);
+                    }
+                });
+            } 
+            catch (error) {
+                console.error('Error sharing:', error);
+                alert('Error sharing QR code: ' + error.message);
+            }
+        });
+        
+        // Download QR Code
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            try {
+                const canvas = getPaddedQRCanvas();
+                
+                if (!canvas) {
+                    alert('QR code not generated yet. Please refresh the page.');
+                    return;
+                }
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = 'maktab-payment-qr.png';
+                link.click();
+                // console.log('QR code downloaded successfully');
+            } 
+            catch (error) {
+                console.error('Error downloading:', error);
+                alert('Error downloading QR code: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
